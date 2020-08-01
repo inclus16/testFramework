@@ -1,0 +1,18 @@
+{
+    "name": "wow12/framework",
+    "authors": [
+        {
+            "name": "Sergey",
+            "email": "sergey.mindblast@mail.ru"
+        }
+    ],
+    "require-dev": {
+        "php-ds/php-ds": "^1.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "App/",
+            "System\\": "System/"
+        }
+    }
+}

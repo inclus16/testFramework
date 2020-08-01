@@ -1,0 +1,9 @@
+[
+  {
+    "path":"/test",
+    "method": "GET",
+    "controller": "App\\Src\\Http\\Controllers\\TestController",
+    "action": "testGet",
+    "name": "test"
+  }
+]

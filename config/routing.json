@@ -1,17 +1,20 @@
 [
   {
-    "path": "/test",
+    "path": "/test/{id}/create",
     "method": "GET",
     "controller": "App\\Http\\Controllers\\TestController",
     "action": "testGet",
-    "middlewares": [],
+    "middlewares": [
+      "App\\Http\\Middlewares\\AuthMiddleware"
+    ],
     "name": "test"
   },
   {
-    "path": "/test",
-    "method": "POST",
+    "path": "/test/{id}/update",
+    "method": "GET",
     "controller": "App\\Http\\Controllers\\TestController",
     "action": "testGet",
+    "parameters": [],
     "middlewares": [],
     "name": "test"
   },
@@ -21,6 +24,7 @@
     "controller": "App\\Http\\Controllers\\TestController",
     "action": "testGett",
     "middlewares": [],
+    "parameters": [],
     "name": "test"
   }
 ]

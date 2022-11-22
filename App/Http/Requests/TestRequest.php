@@ -15,7 +15,7 @@ class TestRequest extends AppRequest
     public function getRules(): Map
     {
         return new Map([
-            'field' => new Rule(Required::class)
+            'field' => new Required()
         ]);
     }
 }

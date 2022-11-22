@@ -13,10 +13,13 @@ class ServiceCollection
 
     private Vector $scoped;
 
+    private Vector $compiledSingletons;
+
     public function __construct()
     {
         $this->singletons = new Vector();
         $this->scoped = new Vector();
+        $this->compiledSingletons = new Vector();
     }
 
     public function buildServiceProvider(): ServiceProvider
@@ -38,6 +41,11 @@ class ServiceCollection
         }
     }
 
+    public function addCompletedSingleton(object $singleton): void
+    {
+        $this->compiledSingletons->push($singleton);
+    }
+
     public function get(string $class): ?object
     {
         return $this->singletons->filter(fn(object $obj) => $obj instanceof $class)->first();
@@ -45,14 +53,13 @@ class ServiceCollection
 
     private function compile(): ServiceProvider
     {
-        $compiledSingletons = new Vector();
         foreach ($this->singletons as $class) {
             $reflection = new \ReflectionClass($class);
             $constructor = $reflection->getConstructor();
             if ($constructor === null || $constructor->getNumberOfParameters() === 0) {
-                $compiledSingletons->push($reflection->newInstance());
+                $this->compiledSingletons->push($reflection->newInstance());
             } else {
-                $compiledSingletons->push($reflection->newInstanceArgs($this->getParameters($constructor->getParameters(), $compiledSingletons)));
+                $this->compiledSingletons->push($reflection->newInstanceArgs($this->getParameters($constructor->getParameters(), $this->compiledSingletons)));
             }
         }
         $compiledScoped = new Vector();
@@ -69,7 +76,7 @@ class ServiceCollection
             }
         }
         $sp = ServiceProvider::getInstance();
-        $sp->setCompiledServices($compiledSingletons, $compiledScoped);
+        $sp->setCompiledServices($this->compiledSingletons, $compiledScoped);
         return $sp;
     }
 

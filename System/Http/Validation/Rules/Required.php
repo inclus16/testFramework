@@ -6,25 +6,23 @@ namespace System\Http\Validation\Rules;
 
 use System\Http\Dto\ValidationResult;
 
-class Required extends AbstractRule
+class Required implements RuleInterface
 {
     private string $message = '{0} is required';
 
-    function validate(string $name, $field): ValidationResult
+    public function validate(string $name, $field): bool
     {
         $this->message = str_replace('{0}', $name, $this->message);
-        if (is_null($field)) {
-            return ValidationResult::createWithError($this->getMessage());
-        }
-        return ValidationResult::createSuccess();
+        return is_null($field);
     }
 
-    function setErrorMessage(string $message): IRule
+    public function setErrorMessage(string $message): RuleInterface
     {
         $this->message = $message;
+        return $this;
     }
 
-    protected function getMessage(): string
+    public function getMessage(): string
     {
         return $this->message;
     }

@@ -9,31 +9,24 @@ use Swoole\Http\Request;
 
 class BasicRequest
 {
-    private string $method;
 
-    private string $path;
-
-    private Map $headers;
-
-    private Map $fields;
-
-    private function __construct(string $method, string $path, Map $headers, Map $fields)
+    private function __construct(private readonly string $method,
+                                 private readonly string $path,
+                                 private readonly Map    $headers,
+                                 private readonly Map    $fields,
+                                 private readonly Map    $files)
     {
     }
 
     public static function createFromSwooleRequest(Request $request): self
     {
-        return new self($request->getMethod(), $request->server['path_info'], new Map($request->header), new Map($request->post));
-    }
-
-    private function setFields(): void
-    {
-        $this->fields = new Map();
-        $this->fields = match ($this->method) {
-            'GET', 'DELETE', 'HEAD' => new Map($_GET),
-            'POST', 'PATCH', 'PUT' => new Map($_POST),
-            default => throw new \Exception('ewqeqwe'),
-        };
+        $method = $request->getMethod();
+        $hasBody = in_array($method, ['POST', 'PUT']);
+        return new self($request->getMethod(),
+            $request->server['path_info'],
+            new Map($request->header),
+            new Map($hasBody ? $request->post : $request->get),
+            new Map($request->files));
     }
 
     public function getMethod(): string
@@ -46,12 +39,12 @@ class BasicRequest
         return $this->path;
     }
 
-    public function hasHeader(string $key)
+    public function hasHeader(string $key): bool
     {
         return $this->headers->hasKey($key);
     }
 
-    public function getHeader(string $key)
+    public function getHeader(string $key): string
     {
         return $this->headers[$key];
     }
@@ -60,11 +53,21 @@ class BasicRequest
      * @param string $key
      * @return string|null
      */
-    public function getFieldValue(string $key)
+    public function getFieldValue(string $key): ?string
     {
         if ($this->fields->hasKey($key)) {
             return $this->fields[$key];
         }
         return null;
+    }
+
+    public function getFiles(): Map
+    {
+        return $this->files;
+    }
+
+    public function getFile(string $key)
+    {
+        return $this->files[$key] ?? null;
     }
 }

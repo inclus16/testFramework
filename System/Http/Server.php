@@ -24,12 +24,12 @@ class Server
     private function initServer(): void
     {
         $this->server = new \Swoole\Coroutine\Http\Server('php', 9501, false);
-        foreach ($this->routerConfig->getPaths() as $routePath) {
-            $this->server->handle($routePath, function (Request $request, Response $response) {
-                $scoped = ServiceProvider::getInstance()->createScopedServices();
-                $scoped->getService(Pipeline::class)->invoke($request, $response, $scoped);
-            });
-        }
+        $this->server->handle('/', function (Request $request, Response $response) {
+            $start = microtime(1);
+            $scoped = ServiceProvider::getInstance()->createScopedServices();
+            $scoped->getService(Pipeline::class)->invoke($request, $response, $scoped);
+            dump(microtime(1) - $start);
+        });
 
     }
 

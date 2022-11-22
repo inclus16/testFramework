@@ -1,45 +1,24 @@
 <?php
 
-
 namespace System\Http\Dto;
 
-
-use Ds\Vector;
+use Ds\Map;
 
 class ValidationResult
 {
-    private bool $isSuccess = true;
 
-    private string $error;
-
-    private function __construct(bool $isSuccess, string $error = '')
+    public function __construct(private readonly int $statusCode,
+                                private readonly Map $errors)
     {
-        $this->error = $error;
-        $this->isSuccess=$isSuccess;
     }
 
-    public static function createWithError(string $error): self
+    public function getStatusCode(): int
     {
-        return new self(false, $error);
+        return $this->statusCode;
     }
 
-    public static function createSuccess(): self
+    public function getErrors(): Map
     {
-        return new self(true);
+        return $this->errors;
     }
-
-
-    public function isSuccess(): bool
-    {
-        return $this->isSuccess;
-    }
-
-
-    public function getError(): string
-    {
-        return $this->error;
-    }
-
-
-
 }

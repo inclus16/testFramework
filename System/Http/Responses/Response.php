@@ -33,12 +33,6 @@ class Response
         $this->cookies = new Vector();
     }
 
-    public static function create(): self
-    {
-        $caller = get_called_class();
-        return (new $caller());
-    }
-
     public function setHeader(string $key, string $value): self
     {
         $this->headers->push(new Header($key, $value));

@@ -14,13 +14,13 @@ class TestController
     {
     }
 
-    public function testGet(TestRequest $request)
+    public function testGet(int $id, TestRequest $request)
     {
-        return new JsonResponse(['test'=>2]);
+        return new JsonResponse(['id' => $id, 'field' => $request->getBasicRequest()->getFieldValue('field')]);
     }
 
     public function testGett(TestRequest $request)
     {
-        return new JsonResponse(['test'=>2]);
+        return new JsonResponse(['test' => 2]);
     }
 }

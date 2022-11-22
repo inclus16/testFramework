@@ -24,56 +24,16 @@ class Handler
         $this->config = $config;
     }
 
-    public function handle(\Exception $exception): Response
+    public function handle(\Throwable $exception): Response
     {
-        if ($exception instanceof AbstractSystemException) {
-            return $this->handleSystemException($exception);
-        }
-        if ($this->config->get('debug')) {
-            return JsonResponse::create()
-                ->setStatusCode(500)
-                ->setArray([
-                    'status' => 500,
-                    'exception' => get_class($exception),
-                    'message' => $exception->getMessage(),
-                    'trace' => $exception->getTrace()
-                ]);
-        } else {
-            return Response::create()->setStatusCode(500);
-        }
+
     }
 
     private function handleSystemException(AbstractSystemException $exception): Response
     {
-        $type = $exception->getType();
-        switch ($type) {
-            case self::HTTP:
-                return $this->handleHttp($exception);
-            default:
-                return Response::create()
-                    ->setStatusCode(500)
-                    ->setBody($exception->getMessage());
-        }
-    }
-
-    private function handleHttp(AbstractSystemException $exception)
-    {
-        $class = get_class($exception);
-        switch ($class) {
-            case BadRequestException::class:
-                return JsonResponse::create()->setStatusCode(400)
-                    ->setArray(['errors' => $exception->getMessages()]);
-            case UnsupportedMediaTypeException::class:
-                return Response::create()
-                    ->setStatusCode(415);
-            case RouteNotFoundException::class:
-                return Response::create()
-                    ->setStatusCode(404);
-            default:
-                return Response::create()
-                    ->setStatusCode(500)
-                    ->setBody($exception->getMessage());
-        }
+        $response = new Response();
+        $response->status = 500;
+        return $response;
     }
 
 }

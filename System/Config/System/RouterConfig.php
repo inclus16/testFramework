@@ -13,11 +13,11 @@ class RouterConfig
 {
     private const CONFIG_NAME = 'routing.json';
 
-    private Map $routes;
+    private Vector $routes;
 
     public function __construct()
     {
-        $this->routes = new Map();
+        $this->routes = new Vector();
         $this->parseConfig();
     }
 
@@ -26,37 +26,25 @@ class RouterConfig
         $routes = json_decode(file_get_contents(realpath(__DIR__ . '/../../../config/' . self::CONFIG_NAME)), true);
         foreach ($routes as $route) {
             $dto = new RouteConfigItem($route['method'], $route['controller'], $route['action'], $route['name'], $route['path'], new Vector($route['middlewares']));
-            if (!$this->routes->hasKey($route['path'])) {
-                $this->routes[$route['path']] = new Map();
-            }
-            $this->routes[$route['path']]->put($route['method'], $dto);
+            $this->routes->push($dto);
         }
     }
 
     public function getControllers(): Sequence
     {
-        return $this->invokeGetter('getController');
+        $uniqueControllers = new Vector();
+        foreach ($this->invokeGetter('getController') as $controllers) {
+            $uniqueControllers->push($controllers);
+        }
+        return $uniqueControllers;
     }
 
     private function invokeGetter(string $getter): Sequence
     {
-        $itemsCollapsed = new Vector();
-        $itemsNotCollapsed = $this->routes->map(function (string $key, Map $methods) use ($getter) {
-            return $methods->map(function (string $ketMethod, RouteConfigItem $routeItem) use ($getter) {
-                return $routeItem->$getter();
-            })->values();
-        })->values();
-        foreach ($itemsNotCollapsed as $itemVector) {
-            foreach ($itemVector as $item) {
-                if (!$itemsCollapsed->contains($item)) {
-                    $itemsCollapsed->push($item);
-                }
-            }
-        }
-        return $itemsCollapsed;
+        return $this->routes->map(fn(RouteConfigItem $item) => $item->$getter());
     }
 
-    public function getConfig(): Map
+    public function getRoutes(): Vector
     {
         return $this->routes;
     }

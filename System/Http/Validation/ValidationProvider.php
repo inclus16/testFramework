@@ -4,61 +4,58 @@
 namespace System\Http\Validation;
 
 
+use Ds\Map;
 use Ds\Vector;
 use System\Exceptions\Http\BadRequestException;
-use System\Exceptions\Http\UnsupportedMediaTypeException;
 use System\Http\Dto\ValidationResult;
 use System\Http\Requests\AppRequest;
 use System\Http\Requests\BasicRequest;
-use System\Http\Validation\Rules\AbstractRule;
+use System\Http\Validation\Rules\RuleInterface;
 
 class ValidationProvider
 {
-    public function validateCustomRequest(AppRequest $request)
+    public function validateRequest(AppRequest $request): ?ValidationResult
     {
         $basicRequest = $request->getBasicRequest();
-        $this->validateMediaType($request->isJson(), $basicRequest);
-        $this->validateCustomRules($request);
+        $result = $this->validateMediaType($request->isJson(), $basicRequest);
+        if ($result !== null) {
+            return $result;
+        }
+        $result = $this->validateFields($request);
+        if ($result !== null) {
+            return $result;
+        }
+        return null;
     }
 
-    private function validateMediaType(bool $isJson, BasicRequest $basicRequest)
+    private function validateMediaType(bool $isJson, BasicRequest $basicRequest): ?ValidationResult
     {
         if (!$isJson) {
-            return false;
+            return null;
         }
         $headerKey = 'Content-Type';
-        if ($basicRequest->hasHeader($headerKey)) {
-            if ($basicRequest->getHeader($headerKey) !== 'application/json') {
-                throw new UnsupportedMediaTypeException();
-            }
-        } else {
-            throw new UnsupportedMediaTypeException();
+        if (!$basicRequest->hasHeader($headerKey) || $basicRequest->getHeader($headerKey) !== 'application/json') {
+            new ValidationResult(415, new Map());
         }
+        return null;
     }
 
-    private function validateCustomRules(AppRequest $request)
+    private function validateFields(AppRequest $request): ?ValidationResult
     {
         $rules = $request->getRules();
-        $validationResults = new Vector();
+        $validationResults = new Map();
+        /**
+         * @var string $field
+         * @var RuleInterface $rule
+         */
         foreach ($rules as $field => $rule) {
-            /** @var \System\Http\Dto\Rule $rule */
-            /** @var AbstractRule $ruleObject */
-            $ruleObject = (new \ReflectionClass($rule->getClass()))->newInstanceArgs($rule->getParameters());
-            if (!$rule->isDefaultMessage()) {
-                $ruleObject->setErrorMessage($rule->getErrorMessage());
+            if ($rule->validate($field, $request->getBasicRequest()->getFieldValue($field))) {
+                $validationResults->put($field, $rule->getMessage());
             }
-            $validationResults->push($ruleObject->validate($field,$request->getBasicRequest()->getFieldValue($field)));
         }
-        $this->processResults($validationResults);
-    }
-
-    private function processResults(Vector $results)
-    {
-        $errorResults = $results->filter(function (ValidationResult $result){
-            return !$result->isSuccess();
-        });
-        if ($errorResults->count()!==0){
-            throw (new BadRequestException())->setResults($errorResults);
+        if (!$validationResults->isEmpty()) {
+            return new ValidationResult(400, $validationResults);
         }
+        return null;
     }
 }

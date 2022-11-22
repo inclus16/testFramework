@@ -1,20 +1,25 @@
 {
-    "name": "wow12/framework",
-    "authors": [
-        {
-            "name": "Sergey",
-            "email": "sergey.mindblast@mail.ru"
-        }
-    ],
-    "require-dev": {
-        "php-ds/php-ds": "^1.2",
-        "swoole/ide-helper": "^5.0",
-        "symfony/var-dumper": "^6.1"
-    },
-    "autoload": {
-        "psr-4": {
-            "App\\": "App/",
-            "System\\": "System/"
-        }
+  "name": "inclus/framework",
+  "authors": [
+    {
+      "name": "Sergey",
+      "email": "sergey.mindblast@mail.ru"
     }
+  ],
+  "description": "Just for test! Simple HTTP framework powered by swoole",
+  "php": "^8.1",
+  "require-dev": {
+    "php-ds/php-ds": "^1.2",
+    "swoole/ide-helper": "^5.0",
+    "symfony/var-dumper": "^6.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "App/",
+      "System\\": "System/"
+    }
+  },
+  "license": [
+    "MIT"
+  ]
 }

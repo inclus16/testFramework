@@ -8,23 +8,5 @@
       "App\\Http\\Middlewares\\AuthMiddleware"
     ],
     "name": "test"
-  },
-  {
-    "path": "/test/{id}/update",
-    "method": "GET",
-    "controller": "App\\Http\\Controllers\\TestController",
-    "action": "testGet",
-    "parameters": [],
-    "middlewares": [],
-    "name": "test"
-  },
-  {
-    "path": "/test2",
-    "method": "GET",
-    "controller": "App\\Http\\Controllers\\TestController",
-    "action": "testGett",
-    "middlewares": [],
-    "parameters": [],
-    "name": "test"
   }
 ]

@@ -21,7 +21,7 @@ use System\InversionOfControl\ServiceProvider;
 
 abstract class AppServiceProvider
 {
-    protected abstract function registerServices(): void;
+    protected abstract function registerServices(ServiceCollection $collection): void;
 
     public function boot(string $baseDir): ServiceProvider
     {
@@ -37,7 +37,7 @@ abstract class AppServiceProvider
         $collection->addScoped(ControllerParameterResolver::class);
         $collection->addScoped(RouteParametersValidator::class);
         $collection->addScoped(Pipeline::class);
-        $this->registerServices();
+        $this->registerServices($collection);
         $routerConfig = new RouterConfig($appContext);
         $middlewares = $routerConfig->getMiddlewares();
         foreach ($middlewares as $middleware) {

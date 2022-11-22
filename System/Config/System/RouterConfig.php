@@ -5,6 +5,7 @@ namespace System\Config\System;
 
 
 use Ds\Map;
+use System\AppContext;
 use System\Http\Dto\RouteConfigItem;
 use Ds\Sequence;
 use Ds\Vector;
@@ -15,7 +16,7 @@ class RouterConfig
 
     private Vector $routes;
 
-    public function __construct()
+    public function __construct(private readonly AppContext $appContext)
     {
         $this->routes = new Vector();
         $this->parseConfig();
@@ -23,7 +24,7 @@ class RouterConfig
 
     private function parseConfig()
     {
-        $routes = json_decode(file_get_contents(realpath(__DIR__ . '/../../../config/' . self::CONFIG_NAME)), true);
+        $routes = json_decode(file_get_contents(realpath($this->appContext->getBaseDirectory(). '/config/' . self::CONFIG_NAME)), true);
         foreach ($routes as $route) {
             $dto = new RouteConfigItem($route['method'], $route['controller'], $route['action'], $route['name'], $route['path'], new Vector($route['middlewares']));
             $this->routes->push($dto);

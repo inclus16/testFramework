@@ -26,7 +26,8 @@ abstract class AppServiceProvider
     public function boot(string $baseDir): ServiceProvider
     {
         $collection = new ServiceCollection();
-        $collection->addCompletedSingleton(new AppContext($baseDir));
+        $appContext = new AppContext($baseDir);
+        $collection->addCompletedSingleton($appContext);
         $collection->addSingleton(AppConfig::class);
         $collection->addSingleton(RouterConfig::class);
         $collection->addSingleton(RouterResolver::class);
@@ -37,7 +38,7 @@ abstract class AppServiceProvider
         $collection->addScoped(RouteParametersValidator::class);
         $collection->addScoped(Pipeline::class);
         $this->registerServices();
-        $routerConfig = new RouterConfig();
+        $routerConfig = new RouterConfig($appContext);
         $middlewares = $routerConfig->getMiddlewares();
         foreach ($middlewares as $middleware) {
             $collection->addScoped($middleware);

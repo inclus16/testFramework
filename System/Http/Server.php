@@ -25,10 +25,8 @@ class Server
     {
         $this->server = new \Swoole\Coroutine\Http\Server('php', 9501, false);
         $this->server->handle('/', function (Request $request, Response $response) {
-            $start = microtime(1);
             $scoped = ServiceProvider::getInstance()->createScopedServices();
             $scoped->getService(Pipeline::class)->invoke($request, $response, $scoped);
-            dump(microtime(1) - $start);
         });
 
     }

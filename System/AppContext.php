@@ -6,8 +6,14 @@ namespace System;
 
 class AppContext
 {
-    public function getBaseDirectory():string
+
+    public function __construct(private readonly string $baseDir)
     {
-        return realpath(__DIR__.'/../');
+    }
+
+
+    public function getBaseDirectory(): string
+    {
+        return $this->baseDir;
     }
 }

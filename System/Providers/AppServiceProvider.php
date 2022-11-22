@@ -23,10 +23,10 @@ abstract class AppServiceProvider
 {
     protected abstract function registerServices(): void;
 
-    public function boot(): ServiceProvider
+    public function boot(string $baseDir): ServiceProvider
     {
         $collection = new ServiceCollection();
-        $collection->addSingleton(AppContext::class);
+        $collection->addCompletedSingleton(new AppContext($baseDir));
         $collection->addSingleton(AppConfig::class);
         $collection->addSingleton(RouterConfig::class);
         $collection->addSingleton(RouterResolver::class);

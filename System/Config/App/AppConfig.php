@@ -23,7 +23,7 @@ class AppConfig
 
     private function parseConfig(): void
     {
-        $this->config = new Map(json_decode(file_get_contents($this->appContext->getBaseDirectory() . '/' . self::CONFIG_FILE_NAME), true));
+        $this->config = new Map(json_decode(file_get_contents($this->appContext->getBaseDirectory() . '/config/' . self::CONFIG_FILE_NAME), true));
     }
 
     public function get(string $key): mixed

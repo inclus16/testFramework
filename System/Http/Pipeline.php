@@ -31,36 +31,44 @@ class Pipeline
 
     public function invoke(Request $request, Response $response, ScopedServices $scopedServices)
     {
-        $routeData = $this->router->resolveRoute($request->server['path_info'], $request->getMethod());
-        $controllerActionParameters = $this->controllersDescriptor->getActionParameters($routeData->getRouteConfigItem()->getController(),
-            $routeData->getRouteConfigItem()->getControllerAction());
-        if (!$this->routeParametersValidator->validate($controllerActionParameters,
-            $routeData->getParameters())) {
-            $this->writeNotFound($response);
-            return;
-        }
-        foreach ($routeData->getRouteConfigItem()->getMiddlewares() as $middleware) {
-            /** @var MiddlewareInterface $middlewareInstance */
-            $middlewareInstance = $scopedServices->getService($middleware);
-            if (!$middlewareInstance->invoke($request)) {
-                $this->writeResponse($response, $middlewareInstance->getResponse());
+        try {
+            $routeData = $this->router->resolveRoute($request->server['path_info'], $request->getMethod());
+            if ($routeData === null) {
+                $this->writeNotFound($response);
                 return;
             }
-        }
-        $resolvedActionParameters = $this->controllerParameterResolver->resolve($controllerActionParameters, $routeData->getParameters(), $request);
-        foreach ($resolvedActionParameters as $resolvedActionParameter) {
-            if ($resolvedActionParameter instanceof AppRequest) {
-                $validationResult = $this->validation->validateRequest($resolvedActionParameter);
-                if ($validationResult !== null) {
-                    $this->writeResponse($response, new JsonResponse($validationResult->getErrors(), $validationResult->getStatusCode()));
+            $controllerActionParameters = $this->controllersDescriptor->getActionParameters($routeData->getRouteConfigItem()->getController(),
+                $routeData->getRouteConfigItem()->getControllerAction());
+            if (!$this->routeParametersValidator->validate($controllerActionParameters,
+                $routeData->getParameters())) {
+                $this->writeNotFound($response);
+                return;
+            }
+            foreach ($routeData->getRouteConfigItem()->getMiddlewares() as $middleware) {
+                /** @var MiddlewareInterface $middlewareInstance */
+                $middlewareInstance = $scopedServices->getService($middleware);
+                if (!$middlewareInstance->invoke($request)) {
+                    $this->writeResponse($response, $middlewareInstance->getResponse());
                     return;
                 }
             }
+            $resolvedActionParameters = $this->controllerParameterResolver->resolve($controllerActionParameters, $routeData->getParameters(), $request);
+            foreach ($resolvedActionParameters as $resolvedActionParameter) {
+                if ($resolvedActionParameter instanceof AppRequest) {
+                    $validationResult = $this->validation->validateRequest($resolvedActionParameter);
+                    if ($validationResult !== null) {
+                        $this->writeResponse($response, new JsonResponse($validationResult->getErrors(), $validationResult->getStatusCode()));
+                        return;
+                    }
+                }
+            }
+            $controller = $scopedServices->getService($routeData->getRouteConfigItem()->getController());
+            $controllerMethod = $routeData->getRouteConfigItem()->getControllerAction();
+            $controllerResult = $controller->$controllerMethod(...$resolvedActionParameters);
+            $this->writeResponse($response, $controllerResult);
+        } catch (\Throwable $exception) {
+            $this->writeException($response, $exception);
         }
-        $controller = $scopedServices->getService($routeData->getRouteConfigItem()->getController());
-        $controllerMethod = $routeData->getRouteConfigItem()->getControllerAction();
-        $controllerResult = $controller->$controllerMethod(...$resolvedActionParameters);
-        $this->writeResponse($response, $controllerResult);
     }
 
 
@@ -88,6 +96,12 @@ class Pipeline
     private function writeNotFound(Response $response)
     {
         $response->setStatusCode(404);
+        $response->end();
+    }
+
+    private function writeException(Response $response, \Throwable $throwable)
+    {
+        $response->setStatusCode(500);
         $response->end();
     }
 }

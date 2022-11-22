@@ -24,9 +24,9 @@ class BasicRequest
         $hasBody = in_array($method, ['POST', 'PUT']);
         return new self($request->getMethod(),
             $request->server['path_info'],
-            new Map($request->header),
-            new Map($hasBody ? $request->post : $request->get),
-            new Map($request->files));
+            new Map($request->header) ?? [],
+            new Map($hasBody ? ($request->post ?? []) : ($request->get ?? [])),
+            new Map($request->files ?? []));
     }
 
     public function getMethod(): string

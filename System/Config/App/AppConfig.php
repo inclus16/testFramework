@@ -9,7 +9,7 @@ use System\AppContext;
 
 class AppConfig
 {
-    private const CONFIG_FILE_NAME = 'config.json';
+    private const CONFIG_FILE_NAME = 'app.json';
 
     private AppContext $appContext;
 

@@ -27,5 +27,5 @@ abstract class AppRequest
         return $this->request;
     }
 
-    public abstract function getRules():Map;
+    public abstract function getRules(): Map;
 }

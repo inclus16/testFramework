@@ -7,36 +7,17 @@ namespace System\Http\Dto;
 class Cookie
 {
 
-    private string $name;
 
-    private string $value = '';
-
-    private int $expires = 0;
-
-    private string $path = '';
-
-    private string $domain = '';
-
-    private bool $secure = false;
-
-    private bool $httpOnly = false;
-
-
-    public function __construct(string $name,
-                                string $value = '',
-                                int $expires = 0,
-                                string $path = '',
-                                string $domain = '',
-                                bool $secure = false,
-                                bool $httpOnly = false)
+    public function __construct(private readonly string $name,
+                                private readonly string $value = '',
+                                private readonly int    $expires = 0,
+                                private readonly string $path = '',
+                                private readonly string $domain = '',
+                                private readonly bool   $secure = false,
+                                private readonly bool   $httpOnly = false,
+                                private readonly string $samesite,
+                                private readonly string $priority)
     {
-        $this->name = $name;
-        $this->value = $value;
-        $this->expires = $expires;
-        $this->path = $path;
-        $this->domain = $domain;
-        $this->secure = $secure;
-        $this->httpOnly = $httpOnly;
     }
 
 
@@ -82,6 +63,13 @@ class Cookie
     }
 
 
+    public function getSamesite(): string
+    {
+        return $this->samesite;
+    }
 
-
+    public function getPriority(): string
+    {
+        return $this->priority;
+    }
 }

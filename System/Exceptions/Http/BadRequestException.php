@@ -9,7 +9,6 @@ use Ds\Vector;
 use System\Exceptions\AbstractSystemException;
 use System\Exceptions\Handler;
 use System\Http\Dto\ValidationResult;
-use Throwable;
 
 class BadRequestException extends AbstractSystemException
 {

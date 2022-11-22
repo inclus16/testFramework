@@ -1,0 +1,10 @@
+{
+  "database": {
+    "driver": "pgsql",
+    "db": "test",
+    "user": "test",
+    "password": "password",
+    "host": "db"
+  },
+  "debug": true
+}

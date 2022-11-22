@@ -5,11 +5,12 @@ namespace System\Exceptions\Http;
 
 
 use System\Exceptions\AbstractSystemException;
+use System\Exceptions\Handler;
 
 class RouteNotFoundException extends AbstractSystemException
 {
     public function getType(): int
     {
-        return \App\Src\Exceptions\Handler::HTTP;
+        return Handler::HTTP;
     }
 }

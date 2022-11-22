@@ -14,17 +14,17 @@ class Response
     /**
      * @var Header[]
      */
-    private Vector $headers;
+    public Vector $headers;
 
     /**
      * @var Cookie[]
      */
-    private Vector $cookies;
+    public Vector $cookies;
 
-    private int $status = 200;
+    public int $status = 200;
 
 
-    private $body;
+    public $body;
 
 
     public function __construct()
@@ -47,44 +47,16 @@ class Response
 
     public function setCookies(string $name,
                                string $value = '',
-                               int $expires = 0,
+                               int    $expires = 0,
                                string $path = '',
                                string $domain = '',
-                               bool $secure = false,
-                               bool $httpOnly = false): self
+                               bool   $secure = false,
+                               bool   $httpOnly = false,
+                               string $samesite = '',
+                               string $priority = ''): self
     {
-        $this->cookies->push(new Cookie($name, $value, $expires, $path, $domain, $secure, $httpOnly));
+        $this->cookies->push(new Cookie($name, $value, $expires, $path, $domain, $secure, $httpOnly, $samesite, $priority));
         return $this;
-    }
-
-    public function setStatusCode(int $status): self
-    {
-        $this->status = $status;
-        return $this;
-    }
-
-    public function setBody($body): self
-    {
-        $this->body = $body;
-        return $this;
-    }
-
-    public function sendResponse()
-    {
-        foreach ($this->cookies as $cookie) {
-            setcookie($cookie->getName(),
-                $cookie->getValue(),
-                $cookie->getExpires(),
-                $cookie->getPath(),
-                $cookie->getDomain(),
-                $cookie->isSecure(),
-                $cookie->isHttpOnly());
-        }
-        foreach ($this->headers as $header) {
-            \header($header->getKey() . ': ' . $header->getValue());
-        }
-        http_response_code($this->status);
-        echo $this->body;
     }
 
 }

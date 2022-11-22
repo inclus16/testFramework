@@ -1,7 +1,7 @@
 <?php
 
 
-namespace App\Src\Http\Requests;
+namespace App\Http\Requests;
 
 
 use Ds\Map;

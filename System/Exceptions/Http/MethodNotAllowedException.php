@@ -4,8 +4,8 @@
 namespace System\Exceptions\Http;
 
 
-use App\Src\Exceptions\Handler;
 use System\Exceptions\AbstractSystemException;
+use System\Exceptions\Handler;
 
 class MethodNotAllowedException extends AbstractSystemException
 {

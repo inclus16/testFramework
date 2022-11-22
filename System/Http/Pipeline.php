@@ -4,13 +4,14 @@
 namespace System\Http;
 
 
+use App\Http\Requests\TestRequest;
+use Swoole\Http\Request;
+use Swoole\Http\Response;
 use System\Http\Dto\RequestController;
-use System\Http\Requests\AppRequest;
-use System\Http\Responses\Response;
+use System\Http\Requests\BasicRequest;
 use System\Http\Routing\RouterService;
 use System\Http\Validation\ValidationProvider;
-use System\InversionOfControl\ServiceCollection;
-use System\InversionOfControl\ServiceProvider;
+use System\InversionOfControl\ScopedServices;
 
 class Pipeline
 {
@@ -18,67 +19,39 @@ class Pipeline
 
     private ValidationProvider $validation;
 
-    private ServiceProvider $services;
-
     public function __construct(RouterService $router, ValidationProvider $validation)
     {
         $this->router = $router;
         $this->validation = $validation;
     }
 
-    public function setServiceProvider(ServiceProvider $services): self
+    public function invoke(Request $request, Response $response, ScopedServices $scopedServices)
     {
-        $this->services = $services;
-        return $this;
+        $route = $this->router->getConfig($request->server['path_info'], $request->getMethod());
+        $controller = $scopedServices->getService($route->getController());
+        $controllerMethod = $route->getControllerAction();
+        $controllerResult = $controller->$controllerMethod(new TestRequest(BasicRequest::createFromSwooleRequest($request)));
+        $this->writeResponse($response,$controllerResult);
     }
 
-    public function execute(): Response
+    private function writeResponse(Response $response, \System\Http\Responses\Response $controllerResponse)
     {
-        $requestController = $this->router->getController();
-        $controllerObject = $this->services->getService($requestController->getClass());
-        $controllerAction = $requestController->getAction();
-        return $this->resolveAction($controllerObject, $requestController->getClass(), $controllerAction);
-    }
-
-    private function resolveAction(object $obj, string $class, string $action): Response
-    {
-        $reflectionClass = new \ReflectionClass($class);
-        /** @var $parameters \ReflectionParameter[] * */
-        $parameters = $reflectionClass->getMethod($action)->getParameters();
-        $resolvedParameters = [];
-        foreach ($parameters as $parameter) {
-            $reflectionParameterClass = $parameter->getClass();
-            $parent = $reflectionParameterClass->getParentClass();
-            if ($parent !== false && $parent->getName() === AppRequest::class) {
-                $appRequest = $this->resolveCustomRequest($reflectionParameterClass);
-                $this->invokeCustomRequest($appRequest);
-                $resolvedParameters[] = $appRequest;
-            } else {
-                $resolvedParameters[] = $this->services->getService($parameter->getClass()->getName());
-            }
+        $response->setStatusCode($controllerResponse->status);
+        foreach ($controllerResponse->headers as $header) {
+            $response->setHeader($header->getKey(), $header->getValue());
         }
-        $method = new \ReflectionMethod($class, $action);
-        return $method->invokeArgs($obj, $resolvedParameters);
-    }
-
-    private function invokeCustomRequest(AppRequest $request)
-    {
-
-    }
-
-    private function resolveCustomRequest(\ReflectionClass $customRequest): AppRequest
-    {
-        $constructor = $customRequest->getConstructor();
-        if ($constructor === null) {
-            return $customRequest->newInstance();
+        foreach ($controllerResponse->cookies as $cookie) {
+            $response->setCookie($cookie->getName(),
+                $cookie->getValue(),
+                $cookie->getExpires(),
+                $cookie->getPath(),
+                $cookie->getDomain(),
+                $cookie->isSecure(),
+                $cookie->isHttpOnly(),
+                $cookie->getSamesite(),
+                $cookie->getPriority()
+            );
         }
-        $parameters = $constructor->getParameters();
-        $resolvedParameters = [];
-        foreach ($parameters as $parameter) {
-            $resolvedParameters[] = $this->services->getService($parameter->getClass()->getName());
-        }
-        $request = $customRequest->newInstanceArgs($resolvedParameters);
-        $this->validation->validateCustomRequest($request);
-        return $request;
+        $response->end($controllerResponse->body);
     }
 }

@@ -5,6 +5,7 @@ namespace System\Http\Requests;
 
 
 use Ds\Map;
+use Swoole\Http\Request;
 
 class BasicRequest
 {
@@ -16,31 +17,23 @@ class BasicRequest
 
     private Map $fields;
 
-    public function __construct()
+    private function __construct(string $method, string $path, Map $headers, Map $fields)
     {
-        $this->method = $_SERVER['REQUEST_METHOD'];
-        $this->path = strtok($_SERVER['REQUEST_URI'],'?');
-        $this->headers = new Map(getallheaders());
-        $this->setFields();
+    }
+
+    public static function createFromSwooleRequest(Request $request): self
+    {
+        return new self($request->getMethod(), $request->server['path_info'], new Map($request->header), new Map($request->post));
     }
 
     private function setFields(): void
     {
         $this->fields = new Map();
-        switch ($this->method) {
-            case 'GET':
-            case 'DELETE':
-            case 'HEAD':
-                $this->fields = new Map($_GET);
-                break;
-            case 'POST':
-            case 'PATCH':
-            case 'PUT':
-                $this->fields = new Map($_POST);
-                break;
-            default:
-                throw new \Exception('ewqeqwe');
-        }
+        $this->fields = match ($this->method) {
+            'GET', 'DELETE', 'HEAD' => new Map($_GET),
+            'POST', 'PATCH', 'PUT' => new Map($_POST),
+            default => throw new \Exception('ewqeqwe'),
+        };
     }
 
     public function getMethod(): string

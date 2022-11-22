@@ -1,7 +1,7 @@
 <?php
 
 
-namespace App\Src\Exceptions;
+namespace App\Exceptions;
 
 
 use System\Http\Responses\Response;

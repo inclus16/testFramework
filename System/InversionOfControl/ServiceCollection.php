@@ -3,71 +3,74 @@
 
 namespace System\InversionOfControl;
 
-
-use App\Src\Exceptions\Handler;
-use System\Config\System\RouterConfig;
-use System\Http\Pipeline;
+use Ds\Map;
 use System\Exceptions\InversionOfControl\ServiceNotFoundException;
-use System\Http\Requests\BasicRequest;
-use System\Http\Routing\RouterService;
 use Ds\Vector;
-use System\Http\Validation\ValidationProvider;
 
 class ServiceCollection
 {
-    private Vector $collection;
+    private Vector $singletons;
 
-    private RouterConfig $routerConfig;
+    private Vector $scoped;
 
     public function __construct()
     {
-        $this->collection = new Vector();
-        $this->routerConfig = new RouterConfig();
-        $this->addSystemServices();
+        $this->singletons = new Vector();
+        $this->scoped = new Vector();
     }
 
     public function buildServiceProvider(): ServiceProvider
     {
-        return new ServiceProvider($this->compile());
+        return $this->compile();
     }
 
-    private function addSystemServices()
+    public function addScoped(string $class): void
     {
-        $this->collection->push(BasicRequest::class);
-        $this->collection->push(Handler::class);
-        $this->collection->push(RouterService::class);
-        $this->collection->push(ValidationProvider::class);
-        $this->collection->push(Pipeline::class);
-    }
-
-    private function addControllers()
-    {
-        $controllers = $this->routerConfig->getControllers();
-        foreach ($controllers as $controller) {
-            $this->collection->push($controller);
+        if (!$this->scoped->contains($class)) {
+            $this->scoped->push($class);
         }
     }
 
-    public function add(string $class)
+    public function addSingleton(string $class): void
     {
-        $this->collection->push($class);
+        if (!$this->singletons->contains($class)) {
+            $this->singletons->push($class);
+        }
     }
 
-    private function compile(): Vector
+    public function get(string $class): ?object
     {
-        $compiledClasses = new Vector();
-        $this->addControllers();
-        $compiledClasses->push($this->routerConfig);
-        foreach ($this->collection as $class) {
+        return $this->singletons->filter(fn(object $obj) => $obj instanceof $class)->first();
+    }
+
+    private function compile(): ServiceProvider
+    {
+        $compiledSingletons = new Vector();
+        foreach ($this->singletons as $class) {
             $reflection = new \ReflectionClass($class);
             $constructor = $reflection->getConstructor();
-            if ($constructor === null) {
-                $compiledClasses->push($reflection->newInstance());
+            if ($constructor === null || $constructor->getNumberOfParameters() === 0) {
+                $compiledSingletons->push($reflection->newInstance());
             } else {
-                $compiledClasses->push($reflection->newInstanceArgs($this->getParameters($constructor->getParameters(), $compiledClasses)));
+                $compiledSingletons->push($reflection->newInstanceArgs($this->getParameters($constructor->getParameters(), $compiledSingletons)));
             }
         }
-        return $compiledClasses;
+        $compiledScoped = new Vector();
+        foreach ($this->scoped as $class) {
+            $reflection = new \ReflectionClass($class);
+            $constructor = $reflection->getConstructor();
+            if ($constructor === null || $constructor->getNumberOfParameters() === 0) {
+                $compiledScoped->push(new TemporaryServiceDescriptor($class, new Vector()));
+            } else {
+                $parameters = $constructor->getParameters();
+                $compiledScoped->push(new TemporaryServiceDescriptor($class, new Vector(array_map(function (\ReflectionParameter $parameter) {
+                    return $parameter->getType()->getName();
+                }, $parameters))));
+            }
+        }
+        $sp = ServiceProvider::getInstance();
+        $sp->setCompiledServices($compiledSingletons, $compiledScoped);
+        return $sp;
     }
 
     /**
@@ -81,12 +84,13 @@ class ServiceCollection
         if (empty($classes)) {
             return $classes;
         }
+        /** @var \ReflectionParameter $class */
         foreach ($classes as $class) {
             $objectParameterSequence = $compiledClasses->filter(function (object $compiledClass) use ($class) {
-                return get_class($compiledClass) === $class->getClass()->name;
+                return get_class($compiledClass) === $class->getType()?->getName();
             });
             if ($objectParameterSequence->isEmpty()) {
-                throw new ServiceNotFoundException();
+                throw new ServiceNotFoundException($class->name);
             }
             $parameters[] = $objectParameterSequence->first();
         }

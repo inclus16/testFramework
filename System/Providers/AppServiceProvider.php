@@ -36,9 +36,9 @@ abstract class AppServiceProvider
         $collection->addScoped(ValidationProvider::class);
         $collection->addScoped(ControllerParameterResolver::class);
         $collection->addScoped(RouteParametersValidator::class);
+        $collection->addScoped(Handler::class);
         $collection->addScoped(Pipeline::class);
         $this->registerServices($collection);
-        $collection->addScoped(Handler::class);
         $routerConfig = new RouterConfig($appContext);
         $middlewares = $routerConfig->getMiddlewares();
         foreach ($middlewares as $middleware) {

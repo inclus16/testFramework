@@ -21,13 +21,16 @@ class Handler
         $this->isDebug = $config->get('debug');
     }
 
-    public function handle(\Throwable $exception): Response
+    public function handle(\Throwable $exception, ?int $fd = null): Response
     {
         $response = new Response();
         if ($this->isDebug) {
             $response->body = (new ExceptionPage($exception))->render();
         }
-        $this->logger->error($exception->getMessage());
+        $this->logger->error($exception->getMessage(), [
+            'exception' => $exception,
+            'fd' => $fd
+        ]);
         $response->status = 500;
         return $response;
     }

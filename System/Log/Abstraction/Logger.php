@@ -11,15 +11,12 @@ abstract class Logger extends AbstractLogger
 {
     private const DIR_NAME = 'logs';
 
-    private readonly WaitGroup $waitGroup;
-
     private readonly string $dirFullPath;
 
     private \SplFileObject $fileObject;
 
     public function __construct(private readonly AppContext $context, protected string $name)
     {
-        $this->waitGroup = new WaitGroup();
         $this->dirFullPath = $this->context->getBaseDirectory() . '/' . self::DIR_NAME . '/' . $this->name;
         $this->initDir();
         $this->openFile();
@@ -46,17 +43,25 @@ abstract class Logger extends AbstractLogger
 
     public function log($level, \Stringable|string $message, array $context = []): void
     {
-        if ($this->waitGroup->count() > 0) {
-            $this->waitGroup->wait();
-        }
-        $this->waitGroup->add();
-        $this->fileObject->fwrite($this->format($level, $message));
-        $this->waitGroup->done();
+        $this->fileObject->fwrite($this->format($level, $message, $context));
     }
 
-    private function format($level, \Stringable|string $message): string
+    private function format($level, \Stringable|string $message, array $context = []): string
     {
         $now = (new \DateTime())->format('Y-m-d H:i:s:v');
-        return "[$level][$now]: $message\n";
+        $mainMessage = "[$level][$now]: $message";
+        if (!empty($context['fd'])) {
+            $mainMessage .= "FD: " . $context['fd'];
+        }
+        if (!empty($context['exception']) && $context['exception'] instanceof \Exception) {
+            $exception = $context['exception'];
+            $mainMessage .= "\n Exception: " . $exception->getMessage() . ' File: ' . $exception->getFile() . ' Line: ' . $exception->getLine() . "\n";
+            $traceArray = $exception->getTrace();
+            for ($i = 0; $i < count($traceArray); $i++) {
+                if (!empty($traceArray[$i]['class']))
+                    $mainMessage .= "#$i {$traceArray[$i]['class']}({$traceArray[$i]['line']})\n";
+            }
+        }
+        return "$mainMessage\n";
     }
 }

@@ -35,16 +35,27 @@ class Pipeline
     public function invoke(Request $request, Response $response, ScopedServices $scopedServices): void
     {
         try {
+            $this->logger->info('Incoming request', [
+                'fd' => $request->fd
+            ]);
             $routeData = $this->router->resolveRoute($request->server['path_info'], $request->getMethod());
             if ($routeData === null) {
-                $this->logger->warning('Route not found: ' . $request->server['path_info']);
+                $this->logger->warning('Route not found: ' . $request->server['path_info'], [
+                    'fd' => $request->fd
+                ]);
                 $this->writeNotFound($response);
                 return;
             }
+            $this->logger->info('Route resulved.', [
+                'fd' => $request->fd
+            ]);
             $controllerActionParameters = $this->controllersDescriptor->getActionParameters($routeData->getRouteConfigItem()->getController(),
                 $routeData->getRouteConfigItem()->getControllerAction());
             if (!$this->routeParametersValidator->validate($controllerActionParameters,
                 $routeData->getParameters())) {
+                $this->logger->warning('Invalid route parameters.', [
+                    'fd' => $request->fd
+                ]);
                 $this->writeNotFound($response);
                 return;
             }
@@ -52,6 +63,9 @@ class Pipeline
                 /** @var MiddlewareInterface $middlewareInstance */
                 $middlewareInstance = $scopedServices->getService($middleware);
                 if (!$middlewareInstance->invoke($request)) {
+                    $this->logger->warning('Middleware ' . get_class($middlewareInstance) . ' broke pipeline', [
+                        'fd' => $request->fd
+                    ]);
                     $this->writeResponse($response, $middlewareInstance->getResponse());
                     return;
                 }
@@ -61,17 +75,26 @@ class Pipeline
                 if ($resolvedActionParameter instanceof AppRequest) {
                     $validationResult = $this->validation->validateRequest($resolvedActionParameter);
                     if ($validationResult !== null) {
+                        $this->logger->warning('Request validation fails', [
+                            'fd' => $request->fd
+                        ]);
                         $this->writeResponse($response, new JsonResponse($validationResult->getErrors(), $validationResult->getStatusCode()));
                         return;
                     }
                 }
             }
             $controller = $scopedServices->getService($routeData->getRouteConfigItem()->getController());
+            $this->logger->warning('Dispatching to controller', [
+                'fd' => $request->fd
+            ]);
             $controllerMethod = $routeData->getRouteConfigItem()->getControllerAction();
             $controllerResult = $controller->$controllerMethod(...$resolvedActionParameters);
             $this->writeResponse($response, $controllerResult);
+            $this->logger->warning('Response ended', [
+                'fd' => $request->fd
+            ]);
         } catch (\Throwable $exception) {
-            $this->writeResponse($response, $this->handler->handle($exception));
+            $this->writeResponse($response, $this->handler->handle($exception, $request->fd));
         }
     }
 

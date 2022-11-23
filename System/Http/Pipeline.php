@@ -35,7 +35,7 @@ class Pipeline
     public function invoke(Request $request, Response $response, ScopedServices $scopedServices): void
     {
         try {
-            $this->logger->info('Incoming request', [
+            $this->logger->debug('Incoming request', [
                 'fd' => $request->fd
             ]);
             $routeData = $this->router->resolveRoute($request->server['path_info'], $request->getMethod());
@@ -46,7 +46,7 @@ class Pipeline
                 $this->writeNotFound($response);
                 return;
             }
-            $this->logger->info('Route resulved.', [
+            $this->logger->debug('Route resolved.', [
                 'fd' => $request->fd
             ]);
             $controllerActionParameters = $this->controllersDescriptor->getActionParameters($routeData->getRouteConfigItem()->getController(),
@@ -84,13 +84,13 @@ class Pipeline
                 }
             }
             $controller = $scopedServices->getService($routeData->getRouteConfigItem()->getController());
-            $this->logger->warning('Dispatching to controller', [
+            $this->logger->debug('Dispatching to controller', [
                 'fd' => $request->fd
             ]);
             $controllerMethod = $routeData->getRouteConfigItem()->getControllerAction();
             $controllerResult = $controller->$controllerMethod(...$resolvedActionParameters);
             $this->writeResponse($response, $controllerResult);
-            $this->logger->warning('Response ended', [
+            $this->logger->debug('Response ended', [
                 'fd' => $request->fd
             ]);
         } catch (\Throwable $exception) {

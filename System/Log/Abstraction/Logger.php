@@ -3,9 +3,11 @@
 namespace System\Log\Abstraction;
 
 use Psr\Log\AbstractLogger;
+use Psr\Log\LogLevel;
 use Swoole\Coroutine;
 use Swoole\Coroutine\WaitGroup;
 use System\AppContext;
+use System\Config\App\AppConfig;
 
 abstract class Logger extends AbstractLogger
 {
@@ -13,13 +15,17 @@ abstract class Logger extends AbstractLogger
 
     private readonly string $dirFullPath;
 
+    private bool $isDebug;
+
     private \SplFileObject $fileObject;
 
-    public function __construct(private readonly AppContext $context, protected string $name)
+    public function __construct(private readonly AppContext $context,
+                                AppConfig                   $config, protected string $name)
     {
         $this->dirFullPath = $this->context->getBaseDirectory() . '/' . self::DIR_NAME . '/' . $this->name;
         $this->initDir();
         $this->openFile();
+        $this->isDebug = $config->get('debug');
 
     }
 
@@ -43,6 +49,8 @@ abstract class Logger extends AbstractLogger
 
     public function log($level, \Stringable|string $message, array $context = []): void
     {
+        if ($level === LogLevel::DEBUG && !$this->isDebug)
+            return;
         $this->fileObject->fwrite($this->format($level, $message, $context));
     }
 

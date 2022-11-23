@@ -5,6 +5,7 @@ namespace System\Exceptions;
 
 
 use System\Config\App\AppConfig;
+use System\Http\Pages\ExceptionPage;
 use System\Http\Responses\Response;
 
 class Handler
@@ -23,9 +24,7 @@ class Handler
     {
         $response = new Response();
         if ($this->isDebug) {
-            $message = $exception->getMessage();
-            $trace = $exception->getTraceAsString();
-            $response->body = "$message \n $trace";
+            $response->body = (new ExceptionPage($exception))->render();
         }
         $response->status = 500;
         return $response;

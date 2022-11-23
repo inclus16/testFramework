@@ -18,6 +18,7 @@ use System\Http\Validation\ValidationProvider;
 use System\InversionOfControl\ControllersDescriptor;
 use System\InversionOfControl\ServiceCollection;
 use System\InversionOfControl\ServiceProvider;
+use System\Log\PipelineLogger;
 
 abstract class AppServiceProvider
 {
@@ -32,6 +33,7 @@ abstract class AppServiceProvider
         $collection->addSingleton(RouterConfig::class);
         $collection->addSingleton(RouterResolver::class);
         $collection->addSingleton(Server::class);
+        $collection->addSingleton(PipelineLogger::class);
         $collection->addScoped(RouterResolver::class);
         $collection->addScoped(ValidationProvider::class);
         $collection->addScoped(ControllerParameterResolver::class);

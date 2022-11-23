@@ -15,8 +15,10 @@ class ExceptionPage implements PageInterface
     public function render(): string
     {
         $trace = '';
-        foreach ($this->exception->getTrace() as $stackItem) {
-            $trace .= "<p>$stackItem</p>";
+        $traceArray = $this->exception->getTrace();
+        for ($i = 0; $i < count($traceArray); $i++) {
+            if (!empty($traceArray[$i]['class']))
+                $trace .= "<p>#$i {$traceArray[$i]['class']}({$traceArray[$i]['line']})</p>";
         }
         $html = <<< LINCOLN
 <!DOCTYPE html>
@@ -32,9 +34,10 @@ class ExceptionPage implements PageInterface
 </style>
 </head>
 <body>
-<h1>{{$this->exception->getMessage()}}</h1>
+<h1>There is an exception was thrown: {$this->exception->getMessage()}</h1>
+<h2> {$this->exception->getFile()}({$this->exception->getLine()})</h2>
 <br>
-{{$trace}}
+{$trace}
 </body>
 </html>
 LINCOLN;

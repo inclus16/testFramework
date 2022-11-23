@@ -10,7 +10,6 @@ use Swoole\Http\Response;
 use System\Exceptions\Handler;
 use System\Http\Middleware\Abstractions\MiddlewareInterface;
 use System\Http\Requests\AppRequest;
-use System\Http\Requests\BasicRequest;
 use System\Http\Responses\JsonResponse;
 use System\Http\Routing\ControllerParameterResolver;
 use System\Http\Routing\RouteParametersValidator;
@@ -18,6 +17,7 @@ use System\Http\Routing\RouterResolver;
 use System\Http\Validation\ValidationProvider;
 use System\InversionOfControl\ControllersDescriptor;
 use System\InversionOfControl\ScopedServices;
+use System\Log\PipelineLogger;
 
 class Pipeline
 {
@@ -27,6 +27,7 @@ class Pipeline
                                 private readonly ControllersDescriptor       $controllersDescriptor,
                                 private readonly RouteParametersValidator    $routeParametersValidator,
                                 private readonly ControllerParameterResolver $controllerParameterResolver,
+                                private readonly PipelineLogger              $logger,
                                 private readonly Handler                     $handler)
     {
     }
@@ -36,6 +37,7 @@ class Pipeline
         try {
             $routeData = $this->router->resolveRoute($request->server['path_info'], $request->getMethod());
             if ($routeData === null) {
+                $this->logger->warning('Route not found: ' . $request->server['path_info']);
                 $this->writeNotFound($response);
                 return;
             }

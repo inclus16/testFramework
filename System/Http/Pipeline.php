@@ -7,6 +7,7 @@ namespace System\Http;
 use App\Http\Requests\TestRequest;
 use Swoole\Http\Request;
 use Swoole\Http\Response;
+use System\Exceptions\Handler;
 use System\Http\Middleware\Abstractions\MiddlewareInterface;
 use System\Http\Requests\AppRequest;
 use System\Http\Requests\BasicRequest;
@@ -25,11 +26,12 @@ class Pipeline
                                 private readonly ValidationProvider          $validation,
                                 private readonly ControllersDescriptor       $controllersDescriptor,
                                 private readonly RouteParametersValidator    $routeParametersValidator,
-                                private readonly ControllerParameterResolver $controllerParameterResolver)
+                                private readonly ControllerParameterResolver $controllerParameterResolver,
+                                private readonly Handler                     $handler)
     {
     }
 
-    public function invoke(Request $request, Response $response, ScopedServices $scopedServices)
+    public function invoke(Request $request, Response $response, ScopedServices $scopedServices): void
     {
         try {
             $routeData = $this->router->resolveRoute($request->server['path_info'], $request->getMethod());
@@ -67,12 +69,12 @@ class Pipeline
             $controllerResult = $controller->$controllerMethod(...$resolvedActionParameters);
             $this->writeResponse($response, $controllerResult);
         } catch (\Throwable $exception) {
-            $this->writeException($response, $exception);
+            $this->writeResponse($response, $this->handler->handle($exception));
         }
     }
 
 
-    private function writeResponse(Response $response, Responses\Response $controllerResponse)
+    private function writeResponse(Response $response, Responses\Response $controllerResponse): void
     {
         $response->setStatusCode($controllerResponse->status);
         foreach ($controllerResponse->headers as $header) {
@@ -93,15 +95,9 @@ class Pipeline
         $response->end($controllerResponse->body);
     }
 
-    private function writeNotFound(Response $response)
+    private function writeNotFound(Response $response): void
     {
         $response->setStatusCode(404);
-        $response->end();
-    }
-
-    private function writeException(Response $response, \Throwable $throwable)
-    {
-        $response->setStatusCode(500);
         $response->end();
     }
 }

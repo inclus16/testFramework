@@ -11,12 +11,18 @@
   "require-dev": {
     "php-ds/php-ds": "^1.2",
     "swoole/ide-helper": "^5.0",
-    "symfony/var-dumper": "^6.1"
+    "symfony/var-dumper": "^6.1",
+    "phpunit/phpunit": "^9.5"
   },
   "autoload": {
     "psr-4": {
       "App\\": "App/",
       "System\\": "System/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Unit\\": "tests/Unit"
     }
   },
   "license": [

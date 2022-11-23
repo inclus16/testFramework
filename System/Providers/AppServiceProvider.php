@@ -5,10 +5,10 @@ namespace System\Providers;
 
 
 use Ds\Map;
-use Ds\Vector;
 use System\AppContext;
 use System\Config\App\AppConfig;
 use System\Config\System\RouterConfig;
+use System\Exceptions\Handler;
 use System\Http\Pipeline;
 use System\Http\Routing\ControllerParameterResolver;
 use System\Http\Routing\RouteParametersValidator;
@@ -38,6 +38,7 @@ abstract class AppServiceProvider
         $collection->addScoped(RouteParametersValidator::class);
         $collection->addScoped(Pipeline::class);
         $this->registerServices($collection);
+        $collection->addScoped(Handler::class);
         $routerConfig = new RouterConfig($appContext);
         $middlewares = $routerConfig->getMiddlewares();
         foreach ($middlewares as $middleware) {

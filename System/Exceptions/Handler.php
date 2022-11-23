@@ -5,33 +5,28 @@ namespace System\Exceptions;
 
 
 use System\Config\App\AppConfig;
-use System\Exceptions\Http\BadRequestException;
-use System\Exceptions\Http\RouteNotFoundException;
-use System\Exceptions\Http\UnsupportedMediaTypeException;
-use System\Http\Responses\JsonResponse;
 use System\Http\Responses\Response;
 
 class Handler
 {
-    public const SYSTEM = 0;
-
-    public const HTTP = 1;
-
     protected AppConfig $config;
+
+    private readonly bool $isDebug;
 
     public function __construct(AppConfig $config)
     {
         $this->config = $config;
+        $this->isDebug = $config->get('debug');
     }
 
     public function handle(\Throwable $exception): Response
     {
-
-    }
-
-    private function handleSystemException(AbstractSystemException $exception): Response
-    {
         $response = new Response();
+        if ($this->isDebug) {
+            $message = $exception->getMessage();
+            $trace = $exception->getTraceAsString();
+            $response->body = "$message \n $trace";
+        }
         $response->status = 500;
         return $response;
     }

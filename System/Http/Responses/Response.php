@@ -24,7 +24,7 @@ class Response
     public int $status = 200;
 
 
-    public $body;
+    public string $body;
 
 
     public function __construct()

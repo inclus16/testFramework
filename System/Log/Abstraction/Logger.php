@@ -3,6 +3,7 @@
 namespace System\Log\Abstraction;
 
 use Psr\Log\AbstractLogger;
+use Swoole\Coroutine;
 use Swoole\Coroutine\WaitGroup;
 use System\AppContext;
 
@@ -32,15 +33,15 @@ abstract class Logger extends AbstractLogger
         }
     }
 
-    private function getTodayFileName(): string
+    private function getTodayFilePath(): string
     {
         $today = (new \DateTime())->format('Y-m-d');
-        return $this->name . '_' . $today;
+        return $this->dirFullPath . '/' . $this->name . '_' . $today;
     }
 
     private function openFile(): void
     {
-        $this->fileObject = new \SplFileObject($this->getTodayFileName(), 'a');
+        $this->fileObject = new \SplFileObject($this->getTodayFilePath(), 'a');
     }
 
     public function log($level, \Stringable|string $message, array $context = []): void
@@ -55,7 +56,7 @@ abstract class Logger extends AbstractLogger
 
     private function format($level, \Stringable|string $message): string
     {
-        $now = (new \DateTime())->format('Y-m-d H:i:s');
-        return "[$level][$now]: $message";
+        $now = (new \DateTime())->format('Y-m-d H:i:s:v');
+        return "[$level][$now]: $message\n";
     }
 }
